@@ -1,8 +1,17 @@
 package edu.uw.decorations;
 
 
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.UserDictionary;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +23,11 @@ import android.widget.TextView;
 /**
  * A simple Fragment to display a list of words.
  */
-public class WordListFragment extends Fragment {
+public class WordListFragment extends DialogFragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = "WordList";
 
-    private ArrayAdapter<String> adapter;
+    private SimpleCursorAdapter adapter;
 
     public WordListFragment() {
         // Required empty public constructor
@@ -50,12 +59,31 @@ public class WordListFragment extends Fragment {
         //controller
         AdapterView listView = (AdapterView)rootView.findViewById(R.id.wordListView);
 
-        adapter = new ArrayAdapter<String>(
-                getActivity(), R.layout.list_item_layout, R.id.txtListItem, data);
+
+        /* Content Provider STuff */
+
+//        ContentResolver resolver = getActivity().getContentResolver();
+//        String[] projection = new String[] {UserDictionary.Words.WORD, UserDictionary.Words._ID};
+//        Cursor cursor = resolver.query(UserDictionary.Words.CONTENT_URI,
+//                projection,
+//                null,
+//                null,
+//                null
+//                );
+
+
+        adapter = new SimpleCursorAdapter(
+                getActivity(),
+                R.layout.list_item_layout,
+                null,
+                new String[] {UserDictionary.Words.WORD},
+                new int[] {R.id.txtListItem},
+                0);
+//        adapter = new ArrayAdapter<String>(
+//                getActivity(), R.layout.list_item_layout, R.id.txtListItem, data);
         listView.setAdapter(adapter);
 
-
-
+        getLoaderManager().initLoader(0, null, this);
 
         //handle button input
         final TextView inputText = (TextView)rootView.findViewById(R.id.txtAddWord);
@@ -70,4 +98,29 @@ public class WordListFragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+
+        String[] projection = new String[] {UserDictionary.Words.WORD, UserDictionary.Words._ID};
+        CursorLoader loader = new CursorLoader(
+                getActivity(),
+                UserDictionary.Words.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null
+        );
+
+        return loader;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+    }
 }
